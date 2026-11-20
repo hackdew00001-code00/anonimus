@@ -11,6 +11,7 @@ if sys.platform == "win32":
         pass
 
 from telethon import TelegramClient
+from telethon.sessions import StringSession
 from colorama import init, Fore, Style
 
 import config
@@ -54,7 +55,7 @@ def check_credentials() -> tuple[int, str]:
     if not api_id or not api_hash or api_hash == "your_api_hash_here":
         print(f"\n{Fore.RED}[!] Telegram API ma'lumotlari (.env) topilmadi yoki to'liq emas!{Style.RESET_ALL}")
         print(f"{Fore.YELLOW}Ularni https://my.telegram.org saytidan olishingiz mumkin.{Style.RESET_ALL}\n")
-        
+
         try:
             input_id = input(f"{Fore.CYAN}Telegram API_ID ni kiriting: {Style.RESET_ALL}").strip()
             input_hash = input(f"{Fore.CYAN}Telegram API_HASH ni kiriting: {Style.RESET_ALL}").strip()
@@ -85,10 +86,16 @@ async def main():
 
     api_id, api_hash = check_credentials()
 
-    print(f"{Fore.YELLOW}[*] Telegram serveriga ulanilmoqda...{Style.RESET_ALL}")
-    client = TelegramClient(config.SESSION_NAME, api_id, api_hash)
+    session_str = os.getenv("SESSION_STRING", "").strip()
+    if session_str:
+        session = StringSession(session_str)
+    else:
+        session = config.SESSION_NAME
 
-    # Foydalanuvchi akkauntiga kirish (birinchi marta telefon raqam va kod so'raydi)
+    print(f"{Fore.YELLOW}[*] Telegram serveriga ulanilmoqda...{Style.RESET_ALL}")
+    client = TelegramClient(session, api_id, api_hash)
+
+    # Foydalanuvchi akkauntiga kirish (SESSION_STRING bo'lsa, qayta kod so'ramaydi)
     await client.start()
 
     me = await client.get_me()
